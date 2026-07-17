@@ -1,0 +1,1 @@
+- [SpaceX IPO app overview](spacex-ipo-overview.md) — stack, auth pattern, admin license key, and key API integrations used in this project.

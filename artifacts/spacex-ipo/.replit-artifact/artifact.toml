@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "SpaceX IPO Access"
+version = "1.0.0"
+id = "artifacts/spacex-ipo"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22678
+
+[services.development]
+run = "pnpm --filter @workspace/spacex-ipo run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/spacex-ipo", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/spacex-ipo/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22678"
+BASE_PATH = "/"

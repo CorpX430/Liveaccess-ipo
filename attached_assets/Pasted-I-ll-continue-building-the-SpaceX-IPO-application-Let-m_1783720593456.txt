@@ -1,0 +1,1390 @@
+I'll continue building the SpaceX IPO application. Let me complete the remaining components and pages.
+14.  components/ui/slider.tsx
+"use client";
+import * as React from "react";
+import * as SliderPrimitive from "@radix-ui/react-slider";
+import { cn } from "@/lib/utils";
+const Slider = React.forwardRef<
+React.ElementRef<typeof SliderPrimitive.Root>,
+React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root>
+(({ className, ...props }, ref) => (
+<SliderPrimitive.Root
+ref={ref}
+className={cn(
+"relative flex w-full touch-none select-none items-center",
+className
+)}
+{...props}
+<SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-secondary">
+  <SliderPrimitive.Range className="absolute h-full bg-spacex-blue" />
+</SliderPrimitive.Track>
+<SliderPrimitive.Thumb className="block h-5 w-5 rounded-full border-2 border-spacex-blue bg-background ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50" />
+
+</SliderPrimitive.Root>
+));
+Slider.displayName = SliderPrimitive.Root.displayName;
+export { Slider };
+----
+15.  components/application-form.tsx (Complete)
+"use client";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Rocket, Check, AlertCircle, ChevronRight, ChevronLeft, Shield, Wallet } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { useToast } from "@/hooks/use-toast";
+import { formatCurrency } from "@/lib/utils";
+export function ApplicationForm() {
+const [step, setStep] = useState(1);
+const [amount, setAmount] = useState(5000);
+const [brokerage, setBrokerage] = useState("");
+const [accountNumber, setAccountNumber] = useState("");
+const [isSubmitting, setIsSubmitting] = useState(false);
+const [isSuccess, setIsSuccess] = useState(false);
+const { toast } = useToast();
+const brokerages = [
+"Charles Schwab",
+"Fidelity",
+"Robinhood",
+"SoFi",
+"ETRADE",
+"TD Ameritrade",
+"Webull",
+"Interactive Brokers",
+];
+const handleNext = () => {
+if (step < 3) setStep(step + 1);
+};
+const handleBack = () => {
+if (step > 1) setStep(step - 1);
+};
+const handleSubmit = async (e: React.FormEvent) => {
+e.preventDefault();
+setIsSubmitting(true);
+await new Promise((resolve) => setTimeout(resolve, 2500));
+
+setIsSubmitting(false);
+setIsSuccess(true);
+toast({
+  title: "Application Submitted Successfully",
+  description: `Your application for ${formatCurrency(amount)} has been received. Reference: SPX-2026-${Math.floor(Math.random() * 90000) + 10000}`,
+  variant: "success",
+});
+
+};
+if (isSuccess) {
+return (
+
+
+Pending Allocation
+</span>
+</div>
+</div>
+<div className="flex flex-col sm:flex-row gap-3">
+<Button variant="spacex" onClick={() => window.location.href = "/portfolio"} className="flex-1">
+View Portfolio
+</Button>
+<Button variant="outline" onClick={() => window.location.href = "/dashboard"} className="flex-1 border-white/20">
+Go to Dashboard
+</Button>
+</div>
+</motion.div>
+);
+}
+return (
+ : s}
+</div>
+
+</div>
+))}
+</div>
+  <form onSubmit={handleSubmit}>
+    <AnimatePresence mode="wait">
+      {step === 1 && (
+        <motion.div
+          key="step1"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          className="space-y-6"
+        >
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 rounded-full bg-spacex-blue/20 flex items-center justify-center mx-auto mb-4">
+              <Wallet className="h-8 w-8 text-spacex-blue" />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2">
+              Investment Amount
+            </h2>
+            <p className="text-muted-foreground">
+              How much would you like to invest in the SpaceX IPO?
+            </p>
+          </div>
+
+          <div className="text-center py-6">
+            <motion.div
+              key={amount}
+              initial={{ scale: 1.1 }}
+              animate={{ scale: 1 }}
+              className="text-5xl font-bold text-white mb-2"
+            >
+              {formatCurrency(amount)}
+            </motion.div>
+            <div className="text-sm text-muted-foreground mb-8">
+              Investment Amount
+            </div>
+            <Slider
+              value={[amount]}
+              onValueChange={(value) => setAmount(value[0])}
+              max={100000}
+              min={100}
+              step={100}
+              className="w-full mb-4"
+            />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>$100</span>
+              <span>$100,000</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+            {[1000, 2500, 5000, 10000, 25000, 50000].map((val) => (
+              <button
+                key={val}
+                type="button"
+                onClick={() => setAmount(val)}
+                className={`p-2 rounded-lg border text-xs sm:text-sm font-medium transition-all ${
+                  amount === val
+                    ? "border-spacex-blue bg-spacex-blue/10 text-spacex-blue shadow-lg shadow-spacex-blue/20"
+                    : "border-white/10 text-muted-foreground hover:border-white/30 hover:text-white"
+                }`}
+              >
+                ${(val / 1000).toFixed(0)}K
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-start gap-3 p-4 rounded-lg bg-yellow-500/5 border border-yellow-500/20">
+            <AlertCircle className="h-5 w-5 text-yellow-500 shrink-0 mt-0.5" />
+            <p className="text-sm text-muted-foreground">
+              Minimum investment is $100. There is no guaranteed allocation.
+              If demand exceeds supply, you may receive a partial allocation
+              or no shares.
+            </p>
+          </div>
+
+          <div className="flex justify-end">
+            <Button type="button" variant="spacex" onClick={handleNext}>
+              Continue
+              <ChevronRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        </motion.div>
+      )}
+
+      {step === 2 && (
+        <motion.div
+          key="step2"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          className="space-y-6"
+        >
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 rounded-full bg-spacex-blue/20 flex items-center justify-center mx-auto mb-4">
+              <Shield className="h-8 w-8 text-spacex-blue" />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2">
+              Brokerage Account
+            </h2>
+            <p className="text-muted-foreground">
+              Select your brokerage and enter your account details
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <Label className="text-white mb-2 block">Select Brokerage</Label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {brokerages.map((b) => (
+                  <button
+                    key={b}
+                    type="button"
+                    onClick={() => setBrokerage(b)}
+                    className={`p-3 rounded-lg border text-sm font-medium transition-all ${
+                      brokerage === b
+                        ? "border-spacex-blue bg-spacex-blue/10 text-spacex-blue"
+                        : "border-white/10 text-muted-foreground hover:border-white/30 hover:text-white"
+                    }`}
+                  >
+                    {b}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="account" className="text-white mb-2 block">
+                Account Number
+              </Label>
+              <Input
+                id="account"
+                placeholder="Enter your brokerage account number"
+                value={accountNumber}
+                onChange={(e) => setAccountNumber(e.target.value)}
+                className="bg-white/5 border-white/10 text-white placeholder:text-muted-foreground"
+              />
+            </div>
+
+            <div className="flex items-start gap-3 p-4 rounded-lg bg-white/5 border border-white/10">
+              <Shield className="h-5 w-5 text-spacex-blue shrink-0 mt-0.5" />
+              <p className="text-sm text-muted-foreground">
+                Your account information is encrypted and secure. We only use
+                this to verify your eligibility and process your application.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-between">
+            <Button type="button" variant="outline" onClick={handleBack} className="border-white/20">
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              Back
+            </Button>
+            <Button
+              type="button"
+              variant="spacex"
+              onClick={handleNext}
+              disabled={!brokerage || !accountNumber}
+            >
+              Continue
+              <ChevronRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        </motion.div>
+      )}
+
+      {step === 3 && (
+        <motion.div
+          key="step3"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          className="space-y-6"
+        >
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 rounded-full bg-spacex-blue/20 flex items-center justify-center mx-auto mb-4">
+              <Rocket className="h-8 w-8 text-spacex-blue" />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2">
+              Review & Submit
+            </h2>
+            <p className="text-muted-foreground">
+              Review your application details before submitting
+            </p>
+          </div>
+
+          <div className="space-y-4 p-6 rounded-lg bg-white/5 border border-white/10">
+            <div className="flex justify-between items-center pb-4 border-b border-white/10">
+              <span className="text-muted-foreground">Investment Amount</span>
+              <span className="text-xl font-bold text-white">
+                {formatCurrency(amount)}
+              </span>
+            </div>
+            <div className="flex justify-between items-center pb-4 border-b border-white/10">
+              <span className="text-muted-foreground">Brokerage</span>
+              <span className="text-white font-medium">{brokerage}</span>
+            </div>
+            <div className="flex justify-between items-center pb-4 border-b border-white/10">
+              <span className="text-muted-foreground">Account</span>
+              <span className="text-white font-mono">
+                ****{accountNumber.slice(-4)}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Expected Shares</span>
+              <span className="text-white font-medium">
+                ~{Math.floor(amount / 100)} shares @ $100 est.
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3 p-4 rounded-lg bg-spacex-blue/5 border border-spacex-blue/20">
+            <AlertCircle className="h-5 w-5 text-spacex-blue shrink-0 mt-0.5" />
+            <div className="text-sm text-muted-foreground">
+              <p className="text-white font-medium mb-1">Important Notice</p>
+              <p>
+                By submitting this application, you acknowledge that:
+              </p>
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>Allocation is not guaranteed</li>
+                <li>Funds will be held until allocation is determined</li>
+                <li>You have read and agree to the IPO terms and conditions</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="flex justify-between">
+            <Button type="button" variant="outline" onClick={handleBack} className="border-white/20">
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              Back
+            </Button>
+            <Button
+              type="submit"
+              variant="spacex"
+              disabled={isSubmitting}
+              className="animate-pulse-glow"
+            >
+              {isSubmitting ? (
+                <>
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    className="mr-2 h-4 w-4 border-2 border-white/30 border-t-white rounded-full"
+                  />
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  Submit Application
+                  <Rocket className="ml-2 h-4 w-4" />
+                </>
+              )}
+            </Button>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </form>
+</motion.div>
+
+);
+}
+----
+16.  components/footer.tsx
+import Link from "next/link";
+import { Rocket, Github, Twitter, Linkedin } from "lucide-react";
+export function Footer() {
+return (
+<footer className="border-t border-white/10 bg-spacex-black py-12">
+<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+<div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+{/* Brand */}
+<div className="md:col-span-1">
+<Link href="/" className="flex items-center gap-2 mb-4">
+<Rocket className="h-6 w-6 text-spacex-blue" />
+<span className="text-lg font-bold text-white">
+SpaceX<span className="text-spacex-blue">IPO</span>
+</span>
+</Link>
+<p className="text-sm text-muted-foreground">
+The official IPO application platform for Space Exploration
+Technologies Corp. Invest in the future of space.
+</p>
+</div>
+      {/* Quick Links */}
+      <div>
+        <h4 className="text-sm font-semibold text-white mb-4 uppercase tracking-wider">
+          Platform
+        </h4>
+        <ul className="space-y-2">
+          {[
+            { href: "/dashboard", label: "Dashboard" },
+            { href: "/apply", label: "Apply Now" },
+            { href: "/portfolio", label: "Portfolio" },
+            { href: "/faq", label: "FAQ" },
+          ].map((link) => (
+            <li key={link.href}>
+              <Link
+                href={link.href}
+                className="text-sm text-muted-foreground hover:text-white transition-colors"
+              >
+                {link.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Resources */}
+      <div>
+        <h4 className="text-sm font-semibold text-white mb-4 uppercase tracking-wider">
+          Resources
+        </h4>
+        <ul className="space-y-2">
+          {[
+            { href: "#", label: "SEC Filing (S-1)" },
+            { href: "#", label: "Prospectus" },
+            { href: "#", label: "Risk Factors" },
+            { href: "#", label: "Terms of Service" },
+          ].map((link) => (
+            <li key={link.label}>
+              <Link
+                href={link.href}
+                className="text-sm text-muted-foreground hover:text-white transition-colors"
+              >
+                {link.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Contact */}
+      <div>
+        <h4 className="text-sm font-semibold text-white mb-4 uppercase tracking-wider">
+          Connect
+        </h4>
+        <div className="flex gap-4 mb-4">
+          {[Twitter, Github, Linkedin].map((Icon, i) => (
+            <a
+              key={i}
+              href="#"
+              className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-muted-foreground hover:text-white hover:bg-white/10 transition-colors"
+            >
+              <Icon className="h-5 w-5" />
+            </a>
+          ))}
+        </div>
+        <p className="text-sm text-muted-foreground">
+          support@spacex-ipo.com
+        </p>
+      </div>
+    </div>
+
+    <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+      <p className="text-xs text-muted-foreground">
+        © 2026 Space Exploration Technologies Corp. All rights reserved.
+        NASDAQ: SPX
+      </p>
+      <div className="flex gap-6">
+        <Link
+          href="#"
+          className="text-xs text-muted-foreground hover:text-white"
+        >
+          Privacy Policy
+        </Link>
+        <Link
+          href="#"
+          className="text-xs text-muted-foreground hover:text-white"
+        >
+          Terms of Use
+        </Link>
+        <Link
+          href="#"
+          className="text-xs text-muted-foreground hover:text-white"
+        >
+          Disclosures
+        </Link>
+      </div>
+    </div>
+  </div>
+</footer>
+
+);
+}
+----
+17.  app/page.tsx (Home/Landing)
+import { HeroSection } from "@/components/hero-section";
+import { IPOTimeline } from "@/components/ipo-timeline";
+import { MarketData } from "@/components/market-data";
+import { AllocationCalculator } from "@/components/allocation-calculator";
+import { motion } from "framer-motion";
+import { Rocket, Globe, Zap, Shield } from "lucide-react";
+const features = [
+{
+icon: Rocket,
+title: "Direct Access",
+description:
+"Apply directly for the SpaceX IPO through our integrated platform with major brokerages.",
+},
+{
+icon: Globe,
+title: "Global Reach",
+description:
+"Available to retail investors across multiple countries and regions.",
+},
+{
+icon: Zap,
+title: "Real-time Updates",
+description:
+"Track your application status and get instant notifications on allocation.",
+},
+{
+icon: Shield,
+title: "Secure & Compliant",
+description:
+"Bank-grade encryption and full SEC compliance for your peace of mind.",
+},
+];
+export default function HomePage() {
+return (
+<div>
+<HeroSection />
+  {/* Features Section */}
+  <section className="py-24 relative">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="text-center mb-16">
+        <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+          Why Apply Through Us?
+        </h2>
+        <p className="text-muted-foreground max-w-2xl mx-auto">
+          The most streamlined way to participate in the largest IPO in history
+        </p>
+      </div>
+
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {features.map((feature, i) => (
+          <div
+            key={feature.title}
+            className="glass-panel p-6 hover:border-spacex-blue/30 transition-colors group"
+          >
+            <div className="w-12 h-12 rounded-lg bg-spacex-blue/10 flex items-center justify-center mb-4 group-hover:bg-spacex-blue/20 transition-colors">
+              <feature.icon className="h-6 w-6 text-spacex-blue" />
+            </div>
+            <h3 className="text-lg font-semibold text-white mb-2">
+              {feature.title}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {feature.description}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <IPOTimeline />
+  <MarketData />
+  <AllocationCalculator />
+
+  {/* CTA Section */}
+  <section className="py-24 relative overflow-hidden">
+    <div className="absolute inset-0 bg-gradient-to-r from-spacex-blue/20 to-cyan-500/20" />
+    <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-5" />
+    
+    <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
+      <h2 className="text-3xl sm:text-5xl font-bold text-white mb-6">
+        Ready to Invest in the Future?
+      </h2>
+      <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+        Don't miss your chance to own a piece of SpaceX. Applications close on
+        June 10, 2026. Secure your allocation today.
+      </p>
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a
+          href="/apply"
+          className="inline-flex items-center gap-2 px-8 py-4 rounded-lg bg-spacex-blue text-white font-semibold hover:bg-spacex-blue/90 transition-colors animate-pulse-glow"
+        >
+          <Rocket className="h-5 w-5" />
+          Apply for IPO Now
+        </a>
+        <a
+          href="/faq"
+          className="inline-flex items-center gap-2 px-8 py-4 rounded-lg border border-white/20 text-white font-semibold hover:bg-white/5 transition-colors"
+        >
+          Learn More
+        </a>
+      </div>
+    </div>
+  </section>
+</div>
+
+);
+}
+----
+18.  app/dashboard/page.tsx
+"use client";
+import { motion } from "framer-motion";
+import {
+TrendingUp,
+Users,
+DollarSign,
+Activity,
+ArrowUpRight,
+ArrowDownRight,
+Clock,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { ipoData, formatNumber } from "@/lib/data";
+const stats = [
+{
+title: "Total Applications",
+value: "2.4M",
+change: "+12.5%",
+trend: "up",
+icon: Users,
+},
+{
+title: "Total Demand",
+value: "$84B",
+change: "+8.2%",
+trend: "up",
+icon: DollarSign,
+},
+{
+title: "Oversubscription",
+value: "7.0x",
+change: "+1.2x",
+trend: "up",
+icon: Activity,
+},
+{
+title: "Avg. Application",
+value: "$3,500",
+change: "-2.1%",
+trend: "down",
+icon: TrendingUp,
+},
+];
+const recentActivity = [
+{
+user: "Investor #28492",
+action: "Applied for $10,000",
+time: "2 min ago",
+status: "confirmed",
+},
+{
+user: "Investor #19284",
+action: "Applied for $5,000",
+time: "5 min ago",
+status: "confirmed",
+},
+{
+user: "Investor #48291",
+action: "Modified to $25,000",
+time: "12 min ago",
+status: "pending",
+},
+{
+user: "Investor #10293",
+action: "Cancelled application",
+time: "18 min ago",
+status: "cancelled",
+},
+{
+user: "Investor #39482",
+action: "Applied for $50,000",
+time: "25 min ago",
+status: "confirmed",
+},
+];
+export default function DashboardPage() {
+return (
+<div className="pt-24 pb-12 min-h-screen">
+<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+{/* Header */}
+<motion.div
+initial={{ opacity: 0, y: 20 }}
+animate={{ opacity: 1, y: 0 }}
+className="mb-8"
+>
+<h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
+IPO Dashboard
+</h1>
+<p className="text-muted-foreground">
+Real-time overview of the SpaceX IPO application process
+</p>
+</motion.div>
+    {/* Stats Grid */}
+    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      {stats.map((stat, i) => (
+        <motion.div
+          key={stat.title}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: i * 0.1 }}
+        >
+          <Card className="bg-spacex-dark border-white/10">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {stat.title}
+              </CardTitle>
+              <stat.icon className="h-4 w-4 text-spacex-blue" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-white mb-1">
+                {stat.value}
+              </div>
+              <div
+                className={`flex items-center text-xs ${
+                  stat.trend === "up" ? "text-green-400" : "text-red-400"
+                }`}
+              >
+                {stat.trend === "up" ? (
+                  <ArrowUpRight className="h-3 w-3 mr-1" />
+                ) : (
+                  <ArrowDownRight className="h-3 w-3 mr-1" />
+                )}
+                {stat.change} from yesterday
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      ))}
+    </div>
+
+    {/* Main Content Grid */}
+    <div className="grid lg:grid-cols-3 gap-8">
+      {/* IPO Progress */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="lg:col-span-2"
+      >
+        <Card className="bg-spacex-dark border-white/10">
+          <CardHeader>
+            <CardTitle className="text-white">IPO Progress</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div>
+              <div className="flex justify-between mb-2">
+                <span className="text-sm text-muted-foreground">
+                  Applications Received
+                </span>
+                <span className="text-sm font-bold text-white">
+                  2.4M / 3.0M Target
+                </span>
+              </div>
+              <Progress value={80} className="h-3" />
+            </div>
+
+            <div>
+              <div className="flex justify-between mb-2">
+                <span className="text-sm text-muted-foreground">
+                  Total Demand vs. Offering
+                </span>
+                <span className="text-sm font-bold text-white">
+                  $84B / $12B (7.0x oversubscribed)
+                </span>
+              </div>
+              <Progress value={100} className="h-3" />
+              <div className="mt-1 h-1 bg-gradient-to-r from-spacex-blue to-red-500 rounded-full" style={{ width: "700%" }} />
+            </div>
+
+            <div className="grid sm:grid-cols-3 gap-4 pt-4">
+              <div className="p-4 rounded-lg bg-white/5">
+                <div className="text-sm text-muted-foreground mb-1">
+                  Price Range
+                </div>
+                <div className="text-lg font-bold text-white">
+                  ${ipoData.expectedPriceRange[0]} - $
+                  {ipoData.expectedPriceRange[1]}
+                </div>
+              </div>
+              <div className="p-4 rounded-lg bg-white/5">
+                <div className="text-sm text-muted-foreground mb-1">
+                  Shares Offered
+                </div>
+                <div className="text-lg font-bold text-white">
+                  {formatNumber(ipoData.sharesOffered)}
+                </div>
+              </div>
+              <div className="p-4 rounded-lg bg-white/5">
+                <div className="text-sm text-muted-foreground mb-1">
+                  Expected Valuation
+                </div>
+                <div className="text-lg font-bold text-white">
+                  ${formatNumber(ipoData.marketCap)}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Recent Activity */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+      >
+        <Card className="bg-spacex-dark border-white/10 h-full">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2">
+              <Activity className="h-4 w-4 text-spacex-blue" />
+              Live Activity
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {recentActivity.map((activity, i) => (
+                <div
+                  key={i}
+                  className="flex items-start gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                >
+                  <div
+                    className={`w-2 h-2 rounded-full mt-2 shrink-0 ${
+                      activity.status === "confirmed"
+                        ? "bg-green-400"
+                        : activity.status === "pending"
+                        ? "bg-yellow-400"
+                        : "bg-red-400"
+                    }`}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-white font-medium truncate">
+                      {activity.user}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {activity.action}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                    <Clock className="h-3 w-3" />
+                    {activity.time}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    </div>
+
+    {/* Countdown */}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.6 }}
+      className="mt-8"
+    >
+      <Card className="bg-gradient-to-r from-spacex-blue/20 to-cyan-500/20 border-spacex-blue/30">
+        <CardContent className="p-8">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div>
+              <h3 className="text-xl font-bold text-white mb-2">
+                Application Deadline Approaching
+              </h3>
+              <p className="text-muted-foreground">
+                Don't miss your chance to participate in the SpaceX IPO.
+                Applications close in 2 days.
+              </p>
+            </div>
+            <div className="flex gap-4">
+              {[
+                { value: "02", label: "Days" },
+                { value: "14", label: "Hours" },
+                { value: "32", label: "Minutes" },
+                { value: "18", label: "Seconds" },
+              ].map((unit) => (
+                <div
+                  key={unit.label}
+                  className="text-center p-3 rounded-lg bg-black/30"
+                >
+                  <div className="text-2xl font-bold text-white">
+                    {unit.value}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {unit.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  </div>
+</div>
+
+);
+}
+----
+19.  app/apply/page.tsx
+"use client";
+import { motion } from "framer-motion";
+import { FileText, AlertTriangle } from "lucide-react";
+import { ApplicationForm } from "@/components/application-form";
+export default function ApplyPage() {
+return (
+<div className="pt-24 pb-12 min-h-screen">
+<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+{/* Header */}
+
+IPO Application
+</div>
+<h1 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+Apply for SpaceX IPO
+</h1>
+<p className="text-muted-foreground max-w-2xl mx-auto">
+Complete your application in just a few steps. Make sure you have your
+brokerage account information ready.
+</p>
+</motion.div>
+    {/* Warning Banner */}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2 }}
+      className="max-w-2xl mx-auto mb-8"
+    >
+      <div className="flex items-start gap-3 p-4 rounded-lg bg-yellow-500/5 border border-yellow-500/20">
+        <AlertTriangle className="h-5 w-5 text-yellow-500 shrink-0 mt-0.5" />
+        <div className="text-sm text-muted-foreground">
+          <p className="text-yellow-400 font-medium mb-1">
+            Important Notice
+          </p>
+          <p>
+            This is a high-risk investment. SpaceX IPO shares may be volatile
+            and you could lose your entire investment. Please read the
+            prospectus carefully before applying. Applications close on June
+            10, 2026 at 11:59 PM ET.
+          </p>
+        </div>
+      </div>
+    </motion.div>
+
+    {/* Form */}
+    <ApplicationForm />
+  </div>
+</div>
+
+);
+}
+----
+20.  app/portfolio/page.tsx
+"use client";
+import { motion } from "framer-motion";
+import { PieChart, TrendingUp, Package, Clock, AlertCircle } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { mockApplications, formatCurrency } from "@/lib/data";
+export default function PortfolioPage() {
+const totalInvested = mockApplications.reduce(
+(sum, app) => sum + app.amount,
+0
+);
+const totalAllocated = mockApplications.reduce(
+(sum, app) => sum + (app.allocatedShares || 0) * 100,
+0
+);
+return (
+<div className="pt-24 pb-12 min-h-screen">
+<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+{/* Header */}
+<motion.div
+initial={{ opacity: 0, y: 20 }}
+animate={{ opacity: 1, y: 0 }}
+className="mb-8"
+>
+<h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
+My Portfolio
+</h1>
+<p className="text-muted-foreground">
+Track your SpaceX IPO applications and allocations
+</p>
+</motion.div>
+    {/* Summary Cards */}
+    <div className="grid sm:grid-cols-3 gap-4 mb-8">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+      >
+        <Card className="bg-spacex-dark border-white/10">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Invested
+            </CardTitle>
+            <Package className="h-4 w-4 text-spacex-blue" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-white">
+              {formatCurrency(totalInvested)}
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              Across {mockApplications.length} applications
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        <Card className="bg-spacex-dark border-white/10">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Allocated Value
+            </CardTitle>
+            <PieChart className="h-4 w-4 text-green-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-400">
+              {formatCurrency(totalAllocated)}
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              {mockApplications.filter((a) => a.status === "allocated").length}{" "}
+              allocations confirmed
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <Card className="bg-spacex-dark border-white/10">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Shares
+            </CardTitle>
+            <TrendingUp className="h-4 w-4 text-spacex-blue" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-white">
+              {mockApplications.reduce(
+                (sum, app) => sum + (app.allocatedShares || 0),
+                0
+              )}
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              SPX shares allocated
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    </div>
+
+    {/* Applications Table */}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.4 }}
+    >
+      <Card className="bg-spacex-dark border-white/10">
+        <CardHeader>
+          <CardTitle className="text-white">My Applications</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-white/10">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
+                    Reference ID
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
+                    Amount
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
+                    Status
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
+                    Allocated Shares
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
+                    Submitted
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {mockApplications.map((app) => (
+                  <tr
+                    key={app.id}
+                    className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                  >
+                    <td className="py-4 px-4 text-sm font-mono text-white">
+                      {app.id}
+                    </td>
+                    <td className="py-4 px-4 text-sm text-white font-medium">
+                      {formatCurrency(app.amount)}
+                    </td>
+                    <td className="py-4 px-4">
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+                          app.status === "confirmed"
+                            ? "bg-green-500/10 text-green-400"
+                            : app.status === "pending"
+                            ? "bg-yellow-500/10 text-yellow-400"
+                            : app.status === "allocated"
+                            ? "bg-spacex-blue/10 text-spacex-blue"
+                            : "bg-red-500/10 text-red-400"
+                        }`}
+                      >
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            app.status === "confirmed"
+                              ? "bg-green-400"
+                              : app.status === "pending"
+                              ? "bg-yellow-400"
+                              : app.status === "allocated"
+                              ? "bg-spacex-blue"
+                              : "bg-red-400"
+                          }`}
+                        />
+                        {app.status.charAt(0).toUpperCase() +
+                          app.status.slice(1)}
+                      </span>
+                    </td>
+                    <td className="py-4 px-4 text-sm text-white">
+                      {app.allocatedShares || (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </td>
+                    <td className="py-4 px-4 text-sm text-muted-foreground flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {new Date(app.submittedAt).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {mockApplications.length === 0 && (
+            <div className="text-center py-12">
+              <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">
+                No applications found.{" "}
+                <a href="/apply" className="text-spacex-blue hover:underline">
+                  Apply now
+                </a>
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </motion.div>
+  </div>
+</div>
+
+);
+}
+----
+21.  app/faq/page.tsx
+"use client";
+import { motion } from "framer-motion";
+import { HelpCircle, MessageCircle } from "lucide-react";
+import {
+Accordion,
+AccordionContent,
+AccordionItem,
+AccordionTrigger,
+} from "@/components/ui/accordion";
+import { faqData } from "@/lib/data";
+import { Button } from "@/components/ui/button";
+export default function FAQPage() {
+return (
+<div className="pt-24 pb-12 min-h-screen">
+<div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+{/* Header */}
+
+FAQ
+</div>
+<h1 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+Frequently Asked Questions
+</h1>
+<p className="text-muted-foreground">
+Everything you need to know about the SpaceX IPO
+</p>
+</motion.div>
+    {/* FAQ Accordion */}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2 }}
+    >
+      <Accordion type="single" collapsible className="space-y-4">
+        {faqData.map((faq, i) => (
+          <AccordionItem
+            key={i}
+            value={`item-${i}`}
+            className="glass-panel border-0 px-6 data-[state=open]:border-spacex-blue/30"
+          >
+            <AccordionTrigger className="text-left text-white hover:no-underline py-4">
+              {faq.question}
+            </AccordionTrigger>
+            <AccordionContent className="text-muted-foreground pb-4">
+              {faq.answer}
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
+    </motion.div>
+
+    {/* Contact CTA */}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.4 }}
+      className="mt-12 text-center"
+    >
+      <div className="glass-panel p-8">
+        <MessageCircle className="h-10 w-10 text-spacex-blue mx-auto mb-4" />
+        <h3 className="text-xl font-bold text-white mb-2">
+          Still have questions?
+        </h3>
+        <p className="text-muted-foreground mb-6">
+          Our support team is available 24/7 to help you with your IPO
+          application.
+        </p>
+        <Button variant="spacex">Contact Support</Button>
+      </div>
+    </motion.div>
+  </div>
+</div>
+
+);
+}
+----
+22.  app/api/apply/route.ts
+import { NextRequest, NextResponse } from "next/server";
+export async function POST(request: NextRequest) {
+try {
+const body = await request.json();
+const { amount, brokerage, accountNumber } = body;
+// Validation
+if (!amount || amount < 100) {
+  return NextResponse.json(
+    { error: "Minimum investment amount is $100" },
+    { status: 400 }
+  );
+}
+
+if (!brokerage) {
+  return NextResponse.json(
+    { error: "Brokerage selection is required" },
+    { status: 400 }
+  );
+}
+
+if (!accountNumber || accountNumber.length < 4) {
+  return NextResponse.json(
+    { error: "Valid account number is required" },
+    { status: 400 }
+  );
+}
+
+// Simulate processing
+const applicationId = `SPX-2026-${Math.floor(Math.random() * 90000) + 10000}`;
+const timestamp = new Date().toISOString();
+
+// In production, this would save to a database
+const application = {
+  id: applicationId,
+  amount,
+  brokerage,
+  accountNumber: `****${accountNumber.slice(-4)}`,
+  status: "pending",
+  submittedAt: timestamp,
+};
+
+return NextResponse.json(
+  {
+    success: true,
+    message: "Application submitted successfully",
+    data: application,
+  },
+  { status: 201 }
+);
+
+} catch (error) {
+return NextResponse.json(
+{ error: "Internal server error" },
+{ status: 500 }
+);
+}
+}
+----
+23.  app/api/status/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { ipoData } from "@/lib/data";
+export async function GET(request: NextRequest) {
+const searchParams = request.nextUrl.searchParams;
+const applicationId = searchParams.get("id");
+if (!applicationId) {
+return NextResponse.json(
+{ error: "Application ID is required" },
+{ status: 400 }
+);
+}
+// Simulate status check
+const statuses = ["pending", "confirmed", "allocated", "rejected"];
+const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+return NextResponse.json({
+applicationId,
+status: randomStatus,
+ipoStatus: ipoData.status,
+updatedAt: new Date().toISOString(),
+});
+}
+----
+24.  next.config.js
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+reactStrictMode: true,
+images: {
+remotePatterns: [
+{
+protocol: "https",
+hostname: "images.unsplash.com",
+},
+],
+},
+};
+module.exports = nextConfig;
+----
+25.  tsconfig.json
+{
+"compilerOptions": {
+"lib": ["dom", "dom.iterable", "esnext"],
+"allowJs": true,
+"skipLibCheck": true,
+"strict": true,
+"noEmit": true,
+"esModuleInterop": true,
+"module": "esnext",
+"moduleResolution": "bundler",
+"resolveJsonModule": true,
+"isolatedModules": true,
+"jsx": "preserve",
+"incremental": true,
+"plugins": [
+{
+"name": "next"
+}
+],
+"paths": {
+"@/": ["./"]
+}
+},
+"include": ["next-env.d.ts", "/*.ts", "/.tsx", ".next/types/**/.ts"],
+"exclude": ["node_modules"]
+}
+----
+26.  .env.local
+SpaceX IPO App Environment Variables
+NEXT_PUBLIC_APP_NAME="SpaceX IPO"
+NEXT_PUBLIC_API_URL=http://localhost:3000/api
+----
+🚀 Setup Instructions for Replit
+1.  Create a new Next.js Repl in Replit
+2.  Install dependencies by running:
+npm install
+3.  Copy all files into the appropriate directories as shown above
+4.  Run the development server:
+npm run dev
+5.  Open the webview to see your SpaceX IPO application
+----
+📱 Features Included
+Feature	Description
+Hero Section	Animated landing with stats, countdown, and CTAs
+IPO Timeline	Visual timeline of key milestones
+Market Data	Interactive charts showing price discovery
+Allocation Calculator	Real-time share estimation tool
+Multi-step Application Form	3-step form with validation
+Dashboard	Real-time stats, progress bars, live activity feed
+Portfolio	Track applications and allocations
+FAQ	Expandable accordion with common questions
+Responsive Design	Mobile-first, works on all devices
+Dark Theme	SpaceX-inspired dark aesthetic
+Animations	Framer Motion animations throughout
+API Routes	RESTful endpoints for applications and status
+The app is fully functional with mock data, interactive components, and a polished SpaceX-inspired design using a dark theme with blue accents.

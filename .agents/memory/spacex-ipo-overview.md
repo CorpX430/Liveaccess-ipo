@@ -1,39 +1,54 @@
 ---
 name: SpaceX IPO App Overview
-description: Key decisions, integrations, and quirks for the SPCX Market app.
+description: Key decisions, integrations, and quirks for the PROJECTX MARKET app.
 ---
+
+## Branding
+- App name: **PROJECTX MARKET, inc** (public pages). Internal code still uses "spcx" prefix for localStorage keys and CSS.
+- Ticker: PRJX
+- Logo: `/public/logo.png` (SpaceX wordmark, white)
+- Hero background: `/public/dragon.webp` (SpaceX Dragon capsule, used on Home + SignIn + auth pages)
 
 ## Stack
 - Frontend: React + Vite in `artifacts/spacex-ipo`, routed at `/` (root). Uses wouter, @tanstack/react-query, framer-motion, recharts, sonner, lucide-react.
 - Backend: Express 5 API in `artifacts/api-server`. TypeScript, pino logging, esbuild bundled.
-- DB: PostgreSQL via Drizzle ORM (`@workspace/db`). Schema: investors, deposits, deposit_addresses, holdings.
-- API codegen: OpenAPI → Orval → `@workspace/api-client-react` hooks.
+- DB: PostgreSQL via Drizzle ORM (`lib/db`). Schema in `lib/db/src/schema/`.
+- API codegen: OpenAPI → Orval → `@workspace/api-client-react` hooks (for existing endpoints only).
 
-## Auth pattern
-- User-side: email-only sign-in; approved status stored in `localStorage` as `spcx_user: { email, fullName }`.
-- Admin: anonymous — only protected by license key `StockdevA` checked client-side, stored in `sessionStorage`.
+## Auth system (JWT + email)
+- Registration: `POST /api/auth/register` — name + email + password (bcrypt hash, 12 rounds). Sends verification email via nodemailer.
+- Login: `POST /api/auth/login` — email + password → JWT (7-day expiry). Stored in `localStorage.spcx_token`.
+- Email verification: `GET /api/auth/verify-email?token=xxx` → sets `email_verified=true`. Frontend page at `/verify-email`.
+- Forgot password: `POST /api/auth/forgot-password` — sends reset link (1h expiry).
+- Reset password: `POST /api/auth/reset-password` — token + new password. Frontend page at `/reset-password`.
+- Legacy sign-in: `POST /api/signin` still works (email-only, for backward compat with codegen hook).
+- **Why:** JWT kept independent of admin. Admin is still license-key-only (`StockdevA`), no JWT involved.
+
+## DB schema (investors table)
+- id, full_name, email, password_hash (nullable), email_verified (bool), verification_token, reset_token, reset_token_expires, status (enum: pending/approved/rejected), created_at
+- Other tables: deposits, deposit_addresses, holdings
 
 ## Theme system
 - ThemeContext at `artifacts/spacex-ipo/src/contexts/ThemeContext.tsx`.
 - CSS variables for dark/light defined in `index.css` under `html.light-theme {}`.
 - Toggle persisted in localStorage key `spcx_theme`.
 
-## Email notifications
-- nodemailer installed in api-server. Reads `SMTP_USER` and `SMTP_PASS` env vars (Gmail service).
-- Sends to `steslacorp@gmail.com` on every new investor signup.
-- Graceful no-op if env vars not set — logs a warning.
-- **Why:** User requires real-time admin alerts. Needs Gmail App Password set as `SMTP_PASS` secret to activate.
+## Email (nodemailer)
+- Sends to `steslacorp@gmail.com` on new investor signup (admin notification).
+- Sends verification email to user on registration.
+- Sends password reset email to user on forgot-password.
+- Needs `SMTP_USER` + `SMTP_PASS` Replit secrets (Gmail App Password). Graceful no-op if not set.
+- Email from name: "PROJECTX MARKET"
 
 ## APIs integrated
 - News: `https://newsapi.org/v2/everything` with key `a08656f1a1e84e0da2d3f9c2d5116b66`. Cached 10 min server-side.
-- Stock: Massive.com API (`wUwn9KED79e29Pd9H4EDt5Wac8VpX8Ch`) tried first, falls back to deterministic noise. Cached 60s.
-- **Why:** SpaceX is pre-IPO so no real SPCX ticker exists; real APIs can't return it. The Massive.com call uses AAPL as a proxy for movement.
+- Stock: Massive.com API tried first, falls back to deterministic noise. Cached 60s.
 
-## Admin license key
-- Value: `StockdevA`
-- Gate is purely client-side (sessionStorage). Renders `<LicenseGate>` until correct key entered.
+## Admin
+- `/admin` route — license-key gated client-side. Key: `StockdevA`. SessionStorage persists unlock.
+- JWT does NOT affect admin routes.
 
-## Routes
-- `/news` — live news feed page (requires sign-in)
-- `/admin` — license-gated admin panel (no sign-in needed, just license key)
-- All other portal routes redirect to `/signin` if no `spcx_user` in localStorage.
+## localStorage keys
+- `spcx_user`: `{ email, fullName }` — set on approved login
+- `spcx_token`: JWT string — set on login
+- `spcx_theme`: "dark" | "light"

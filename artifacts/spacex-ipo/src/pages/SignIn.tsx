@@ -1,91 +1,197 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Rocket } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useSignIn } from "@workspace/api-client-react";
 import { toast } from "sonner";
 
 export default function SignIn() {
   const [, setLocation] = useLocation();
   const [email, setEmail] = useState("");
-  const signIn = useSignIn();
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [forgotMode, setForgotMode] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
 
-  const handleSignIn = (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) {
-      toast.error("Please enter your email.");
-      return;
-    }
-
-    signIn.mutate(
-      { data: { email } },
-      {
-        onSuccess: (data) => {
-          if (data.status === 'approved') {
-            localStorage.setItem('spcx_user', JSON.stringify({ email: data.email, fullName: data.fullName }));
-            setLocation("/dashboard");
-          } else if (data.status === 'pending') {
-            setLocation(`/access-pending?email=${encodeURIComponent(email)}`);
-          } else if (data.status === 'rejected') {
-            toast.error("Your access request was not approved.");
-          }
-        },
-        onError: (err) => {
-          toast.error(err?.message || "Sign in failed.");
-        }
+    if (!email || !password) { toast.error("Email and password are required."); return; }
+    setLoading(true);
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+      const res = await fetch(`${base}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error || "Sign in failed."); return; }
+      if (data.status === "approved") {
+        localStorage.setItem("spcx_user", JSON.stringify({ email: data.email, fullName: data.fullName }));
+        localStorage.setItem("spcx_token", data.token);
+        setLocation("/dashboard");
+      } else if (data.status === "pending") {
+        setLocation(`/access-pending?email=${encodeURIComponent(email)}`);
+      } else {
+        toast.error("Your access request was not approved.");
       }
-    );
+    } catch {
+      toast.error("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) { toast.error("Enter your email address."); return; }
+    setLoading(true);
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+      await fetch(`${base}/api/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      setForgotSent(true);
+    } catch {
+      toast.error("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-[100dvh] flex items-center justify-center relative bg-[#050a0f]">
-      <div 
-        className="absolute inset-0 z-0 bg-cover bg-center opacity-40 mix-blend-screen"
-        style={{ 
-          backgroundImage: "url('https://images.unsplash.com/photo-1446776709462-d6b525b9c0b4?w=1920&q=85')" 
+      {/* Dragon background */}
+      <div
+        className="absolute inset-0 z-0 bg-cover"
+        style={{
+          backgroundImage: "url('/dragon.webp')",
+          backgroundPosition: "center center",
+          backgroundSize: "cover",
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-[#050a0f] via-[#050a0f]/80 to-[#050a0f]/40 z-0" />
+      <div className="absolute inset-0 z-0 bg-gradient-to-t from-[#050a0f] via-[#050a0f]/75 to-[#050a0f]/50" />
 
-      <div className="relative z-10 w-full max-w-md p-8 border border-white/20 bg-[#050a0f]/60 backdrop-blur-xl">
-        <div className="flex justify-center mb-8">
-          <div className="flex items-center gap-2 text-white">
-            <Rocket className="w-6 h-6" />
-            <span className="font-display tracking-widest font-bold text-2xl uppercase">SPCX Market</span>
-          </div>
+      <div className="relative z-10 w-full max-w-md px-4">
+        {/* Logo */}
+        <div className="flex flex-col items-center mb-8 gap-2">
+          <img src="/logo.png" alt="PROJECTX logo" className="h-10 w-auto mb-1" />
+          <span className="font-display font-bold uppercase tracking-[4px] text-sm text-center">
+            <span className="text-white">PROJECTX MARKET</span>
+            <span className="text-white/40">, inc</span>
+          </span>
         </div>
 
-        <div className="mb-8">
-          <h1 className="text-3xl font-display font-bold uppercase tracking-widest mb-2 text-center">Client Portal</h1>
-          <p className="text-white/50 text-sm text-center">Enter your registered email to access your dashboard.</p>
-        </div>
+        <div className="border border-white/20 bg-[#050a0f]/70 backdrop-blur-xl p-8 space-y-6">
+          {!forgotMode ? (
+            <>
+              <div className="text-center">
+                <h1 className="text-2xl font-display font-bold uppercase tracking-widest mb-1">Investor Portal</h1>
+                <p className="text-xs text-white/40 uppercase tracking-wider">Sign in to access your dashboard</p>
+              </div>
 
-        <form onSubmit={handleSignIn} className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-xs uppercase tracking-widest font-display text-white/70">Email Address</label>
-            <Input 
-              type="email" 
-              placeholder="Enter your email" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="border-white/20 focus-visible:border-white focus-visible:ring-0 rounded-none bg-black/40 h-14"
-              disabled={signIn.isPending}
-            />
-          </div>
-          <Button 
-            type="submit" 
-            className="w-full h-14 text-lg"
-            disabled={signIn.isPending}
-          >
-            {signIn.isPending ? "Authenticating..." : "Enter Portal"}
-          </Button>
-        </form>
+              <form onSubmit={handleSignIn} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase tracking-widest font-display text-white/50">Email Address</label>
+                  <Input
+                    type="email"
+                    placeholder="john@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="border-white/20 focus-visible:border-white focus-visible:ring-0 rounded-none bg-black/40 h-12"
+                    disabled={loading}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase tracking-widest font-display text-white/50">Password</label>
+                  <div className="relative">
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="border-white/20 focus-visible:border-white focus-visible:ring-0 rounded-none bg-black/40 h-12 pr-10"
+                      disabled={loading}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <div className="text-right">
+                    <button
+                      type="button"
+                      onClick={() => setForgotMode(true)}
+                      className="text-[10px] text-white/40 hover:text-white uppercase tracking-widest font-display transition-colors"
+                    >
+                      Forgot Password?
+                    </button>
+                  </div>
+                </div>
+                <Button type="submit" className="w-full h-12 font-display tracking-widest uppercase" disabled={loading}>
+                  {loading ? "Authenticating..." : "Sign In"}
+                </Button>
+              </form>
 
-        <div className="mt-8 pt-6 border-t border-white/10 text-center">
-          <p className="text-xs text-white/40 uppercase tracking-widest font-display">
-            Not registered? <Link href="/" className="text-white hover:underline ml-1">Request Access</Link>
-          </p>
+              <div className="pt-4 border-t border-white/10 text-center">
+                <p className="text-[10px] text-white/30 uppercase tracking-widest font-display">
+                  Not registered?{" "}
+                  <Link href="/" className="text-white/60 hover:text-white transition-colors">Request Access</Link>
+                </p>
+              </div>
+            </>
+          ) : forgotSent ? (
+            <div className="text-center space-y-4 py-4">
+              <div className="w-12 h-12 rounded-full border border-[#1a8a4a]/40 bg-[#1a8a4a]/10 flex items-center justify-center mx-auto">
+                <span className="text-[#1a8a4a] text-xl">✓</span>
+              </div>
+              <h2 className="font-display text-lg uppercase tracking-widest font-bold">Email Sent</h2>
+              <p className="text-sm text-white/50">If an account exists for <strong className="text-white/80">{email}</strong>, a reset link has been sent.</p>
+              <button
+                onClick={() => { setForgotMode(false); setForgotSent(false); }}
+                className="text-[10px] text-white/40 hover:text-white uppercase tracking-widest font-display transition-colors"
+              >
+                ← Back to Sign In
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="text-center">
+                <h1 className="text-xl font-display font-bold uppercase tracking-widest mb-1">Reset Password</h1>
+                <p className="text-xs text-white/40 uppercase tracking-wider">Enter your email to receive a reset link</p>
+              </div>
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase tracking-widest font-display text-white/50">Email Address</label>
+                  <Input
+                    type="email"
+                    placeholder="john@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="border-white/20 focus-visible:border-white focus-visible:ring-0 rounded-none bg-black/40 h-12"
+                    disabled={loading}
+                  />
+                </div>
+                <Button type="submit" className="w-full h-12 font-display tracking-widest uppercase" disabled={loading}>
+                  {loading ? "Sending..." : "Send Reset Link"}
+                </Button>
+              </form>
+              <div className="text-center">
+                <button
+                  onClick={() => setForgotMode(false)}
+                  className="text-[10px] text-white/40 hover:text-white uppercase tracking-widest font-display transition-colors"
+                >
+                  ← Back to Sign In
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

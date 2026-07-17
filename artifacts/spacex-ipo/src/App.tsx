@@ -4,6 +4,8 @@ import { useTheme } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import AccessPending from "./pages/AccessPending";
 import SignIn from "./pages/SignIn";
+import VerifyEmail from "./pages/VerifyEmail";
+import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import Orders from "./pages/Orders";
 import Management from "./pages/Management";
@@ -23,6 +25,8 @@ function App() {
         <Route path="/" component={Home} />
         <Route path="/access-pending" component={AccessPending} />
         <Route path="/signin" component={SignIn} />
+        <Route path="/verify-email" component={VerifyEmail} />
+        <Route path="/reset-password" component={ResetPassword} />
         <Route path="/dashboard" component={Dashboard} />
         <Route path="/orders" component={Orders} />
         <Route path="/management" component={Management} />

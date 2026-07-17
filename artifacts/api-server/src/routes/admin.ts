@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { db, investorsTable, holdingsTable, depositsTable, depositAddressesTable } from "@workspace/db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { z } from "zod";
+import { sendApprovalEmail, sendRejectionEmail } from "../lib/mailer";
 
 const router = Router();
 
@@ -56,6 +57,18 @@ router.patch("/admin/investors/:id/status", async (req, res): Promise<void> => {
     if (!investor) {
       res.status(404).json({ error: "Investor not found." });
       return;
+    }
+
+    // Send email based on status
+    try {
+      if (parsed.data.status === "approved") {
+        await sendApprovalEmail(investor.email, investor.fullName);
+      } else if (parsed.data.status === "rejected") {
+        await sendRejectionEmail(investor.email, investor.fullName);
+      }
+    } catch (emailErr) {
+      req.log.warn({ emailErr, email: investor.email }, "Email notification failed but status was updated");
+      // Don't fail the request if email fails - status update is primary
     }
 
     const [h] = await db.select().from(holdingsTable).where(eq(holdingsTable.investorId, investor.id));

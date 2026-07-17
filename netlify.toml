@@ -1,0 +1,29 @@
+[build]
+  command = "pnpm install && pnpm run build"
+  publish = "artifacts/spacex-ipo/dist/public"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "24"
+  PNPM_VERSION = "9.0.0"
+
+[dev]
+  command = "pnpm --filter @workspace/spacex-ipo run dev"
+  port = 3000
+  publish = "artifacts/spacex-ipo/dist/public"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[context.production]
+  environment = { NODE_ENV = "production" }
+
+[context.preview]
+  environment = { NODE_ENV = "staging" }
